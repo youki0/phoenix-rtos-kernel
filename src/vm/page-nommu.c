@@ -94,6 +94,12 @@ void vm_pageFree(page_t *lh)
 }
 
 
+int _page_remove(pmap_t *pmap, void *vaddr)
+{
+	return EOK;
+}
+
+
 void _page_showPages(void)
 {
 	return;
@@ -102,18 +108,6 @@ void _page_showPages(void)
 
 int page_map(pmap_t *pmap, void *vaddr, addr_t pa, int attr)
 {
-	page_t *ap;
-
-	proc_lockSet(&pages.lock);
-	if (pmap_enter(pmap, pa, vaddr, attr, NULL) < 0) {
-		if ((ap = _page_alloc(SIZE_PAGE, PAGE_OWNER_KERNEL | PAGE_KERNEL_PTABLE)) == NULL) {
-			proc_lockClear(&pages.lock);
-			return -ENOMEM;
-		}
-		pmap_enter(pmap, pa, vaddr, attr, ap);
-	}
-	proc_lockClear(&pages.lock);
-
 	return EOK;
 }
 
@@ -131,14 +125,6 @@ void vm_pageFreeAt(pmap_t *pmap, void *vaddr)
 
 int _page_sbrk(pmap_t *pmap, void **start, void **end)
 {
-	page_t *np;
-
-	if ((np = _page_alloc(SIZE_PAGE, PAGE_OWNER_KERNEL | PAGE_KERNEL_HEAP)) == NULL)
-		return -ENOMEM;
-
-	if (page_map(pmap, (*end), PGHD_PRESENT | PGHD_WRITE, (addr_t)np) < 0)
-		return -ENOMEM;
-
 	(*end) += SIZE_PAGE;
 
 	return EOK;

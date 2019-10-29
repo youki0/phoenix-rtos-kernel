@@ -159,6 +159,12 @@ void vm_pageFree(page_t *lh)
 }
 
 
+int _page_remove(pmap_t *pmap, void *vaddr)
+{
+	return pmap_remove(pmap, vaddr);
+}
+
+
 static int _page_get_cmp(void *key, void *item)
 {
 	addr_t a = (addr_t)key;

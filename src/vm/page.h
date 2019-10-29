@@ -33,6 +33,9 @@ extern void _page_free(page_t *lh);
 extern void vm_pageFree(page_t *lh);
 
 
+extern int _page_remove(pmap_t *pmap, void *vaddr);
+
+
 extern page_t *_page_get(addr_t addr);
 
 

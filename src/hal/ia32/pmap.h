@@ -103,6 +103,12 @@ extern int pmap_enter(pmap_t *pmap, addr_t addr, void *vaddr, int attrs, page_t 
 extern int pmap_remove(pmap_t *pmap, void *vaddr);
 
 
+static inline int pmap_merge(pmap_t *dst, pmap_t *src)
+{
+	return EOK;
+}
+
+
 extern addr_t pmap_resolve(pmap_t *pmap, void *vaddr);
 
 

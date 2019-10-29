@@ -377,7 +377,7 @@ int _vm_munmap(vm_map_t *map, void *vaddr, size_t size)
 	amap_putanons(e->amap, e->aoffs + vaddr - e->vaddr, size);
 
 	for (offs = vaddr - e->vaddr; offs < vaddr + size - e->vaddr; offs += SIZE_PAGE)
-		pmap_remove(&map->pmap, e->vaddr + offs);
+		_page_remove(&map->pmap, e->vaddr + offs);
 
 	if (e->vaddr == vaddr) {
 		if (e->size == size) {
@@ -486,7 +486,7 @@ void *_vm_mmap(vm_map_t *map, void *vaddr, page_t *p, size_t size, u8 prot, vm_o
 			amap_putanons(e->amap, e->aoffs, w - vaddr);
 
 			do
-				pmap_remove(&map->pmap, w);
+				_page_remove(&map->pmap, w);
 			while (w > vaddr && (w -= SIZE_PAGE));
 
 			_entry_put(map, e);

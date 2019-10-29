@@ -79,9 +79,6 @@ enum { exti_imr = 0, exti_emr, exti_rtsr, exti_ftsr, exti_swier, exti_pr };
 enum { stk_ctrl = 0, stk_load, stk_val, stk_calib };
 
 
-enum { mpu_typer = 0, mpu_cr, mpu_rnr, mpu_rbar, mpu_rasr };
-
-
 enum { syscfg_memrmp = 0, syscfg_pmc, syscfg_exticr };
 
 
@@ -760,71 +757,6 @@ u32 _stm32_systickGet(void)
 		cb += 1000;
 
 	return cb;
-}
-
-
-/* MPU */
-
-
-void _stm32_mpuReadRegion(u8 region, mpur_t *reg)
-{
-	u32 t;
-	u32 ap;
-
-	*(stm32_common.mpu + mpu_rnr) = region & 0x7;
-	t = *(stm32_common.mpu + mpu_rasr);
-	ap = ((t >> 24) & 0x7);
-
-	reg->region = region;
-	reg->base = *(stm32_common.mpu + mpu_rbar) & 0xffffffe0;
-	reg->size = 1 << ((t >> 1) & 0x1f);
-	reg->subregions = (t >> 8) & 0xff;
-	reg->attr = (t & 1)? PGHD_PRESENT : 0;
-	reg->attr |= ((t >> 28) & 1)? PGHD_EXEC : 0;
-
-	if (ap == 3)
-		reg->attr |= PGHD_USER | PGHD_WRITE;
-	else if (ap == 2)
-		reg->attr |= PGHD_USER;
-}
-
-
-void _stm32_mpuEnableRegion(u8 region, u8 state)
-{
-	u32 t;
-
-	*(stm32_common.mpu + mpu_rnr) = region;
-	t = *(stm32_common.mpu + mpu_rasr) & ~1;
-	*(stm32_common.mpu + mpu_rasr) = t | !!state;
-}
-
-
-void _stm32_mpuUpdateRegion(mpur_t *reg)
-{
-	u32 t;
-	u32 size = hal_cpuGetLastBit(reg->size);
-
-	/* Turn off region */
-	_stm32_mpuEnableRegion(reg->region, 0);
-
-	*(stm32_common.mpu + mpu_rbar) = (reg->base & 0xffffffe0) | (1 << 4) | (reg->region & 0xf);
-
-	t = *(stm32_common.mpu + mpu_rasr) & ~((1 << 28) | (0x7 << 24) | (0xff << 8) | 0x1f);
-	t |= size << 1;
-	t |= reg->subregions << 8;
-	t |= (reg->attr & PGHD_EXEC)? (1 << 28) : 0;
-
-	if (!(reg->attr & PGHD_USER))
-		t |= 1 << 24;
-	else if (!(reg->attr & PGHD_WRITE))
-		t |= 2 << 24;
-	else
-		t |= 3 << 24;
-
-	*(stm32_common.mpu + mpu_rasr) = t;
-
-	/* Turn on region if present*/
-	_stm32_mpuEnableRegion(reg->region, reg->attr & PGHD_PRESENT);
 }
 
 

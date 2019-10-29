@@ -88,6 +88,7 @@ process_t *proc_find(unsigned pid)
 static void process_destroy(process_t *p)
 {
 	thread_t *ghost;
+	vm_map_list_t *victim;
 
 	perf_kill(p);
 
@@ -95,6 +96,12 @@ static void process_destroy(process_t *p)
 
 	if (p->mapp != NULL)
 		vm_mapDestroy(p, p->mapp);
+
+	while (p->maps != NULL) {
+		victim = p->maps;
+		p->maps = p->maps->next;
+		vm_kfree(victim);
+	}
 
 	proc_resourcesDestroy(p);
 	proc_portsDestroy(p);
@@ -287,6 +294,7 @@ int proc_start(void (*initthr)(void *), void *arg, const char *path)
 #endif
 
 	process->mapp = NULL;
+	process->maps = NULL;
 
 	/* Initialize resources tree for mutex and cond handles */
 	_resource_init(process);
@@ -720,8 +728,8 @@ int proc_spawn(vm_object_t *object, offs_t offset, size_t size, const char *path
 		hal_spinlockClear(&spawn.sl);
 	}
 	else {
-			vm_kfree(argv);
-			vm_kfree(envp);
+		vm_kfree(argv);
+		vm_kfree(envp);
 	}
 
 	hal_spinlockDestroy(&spawn.sl);
@@ -757,11 +765,18 @@ int proc_syspageSpawn(syspage_program_t *program, const char *path, char **argv)
 static void proc_vforkedExit(thread_t *current, process_spawn_t *spawn, int state)
 {
 	thread_t *parent = spawn->parent;
+	vm_map_list_t *victim;
 
 	hal_memcpy(hal_cpuGetSP(parent->context), current->parentkstack + (hal_cpuGetSP(parent->context) - parent->kstack), parent->kstack + parent->kstacksz - hal_cpuGetSP(parent->context));
 	vm_kfree(current->parentkstack);
 
 	current->process->mapp = NULL;
+
+	while (current->process->maps != NULL) {
+		victim = current->process->maps;
+		current->process->maps = victim->next;
+		vm_kfree(victim);
+	}
 
 	hal_spinlockSet(&spawn->sl);
 	spawn->state = state;
@@ -799,10 +814,26 @@ static void process_vforkThread(void *arg)
 {
 	process_spawn_t *spawn = arg;
 	thread_t *current, *parent;
+	vm_map_list_t *mapit, *nel;
 
 	current = proc_current();
 	parent = spawn->parent;
 	posix_clone(parent->process->id);
+
+	for (mapit = parent->process->maps; mapit != NULL; mapit = mapit->next) {
+		if ((nel = vm_kmalloc(sizeof(*nel))) == NULL) {
+			hal_spinlockSet(&spawn->sl);
+			spawn->state = -ENOMEM;
+			proc_threadWakeup(&spawn->wq);
+			hal_spinlockClear(&spawn->sl);
+
+			proc_threadEnd();
+		}
+
+		nel->map = mapit->map;
+		nel->next = parent->process->maps;
+		current->process->maps = nel;
+	}
 
 	current->process->mapp = parent->process->mapp;
 	current->process->sigmask = parent->process->sigmask;
@@ -901,6 +932,7 @@ static int process_copy(void)
 	thread_t *parent, *current = proc_current();
 	process_spawn_t *spawn = current->execdata;
 	process_t *process = current->process;
+	vm_map_list_t *mapit, *nel;
 	parent = spawn->parent;
 	int len;
 
@@ -918,6 +950,15 @@ static int process_copy(void)
 
 	if (vm_mapCopy(process, &process->map, &parent->process->map) < 0)
 		return -ENOMEM;
+
+	for (mapit = parent->process->maps; mapit != NULL; mapit = mapit->next) {
+		if ((nel = vm_kmalloc(sizeof(*nel))) == NULL)
+			return -ENOMEM;
+
+		nel->map = mapit->map;
+		nel->next = process->maps;
+		process->maps = nel;
+	}
 
 	process->mapp = &process->map;
 	pmap_switch(&process->map.pmap);
@@ -991,6 +1032,7 @@ static int process_execve(thread_t *current)
 	process_spawn_t *spawn = current->execdata;
 	thread_t *parent = spawn->parent;
 	vm_map_t *map;
+	vm_map_list_t *victim;
 
 	/* Restore kernel stack of parent thread */
 	if (parent != NULL) {
@@ -1004,6 +1046,13 @@ static int process_execve(thread_t *current)
 		pmap_switch(&process_common.kmap->pmap);
 
 		vm_mapDestroy(current->process, map);
+
+		while (current->process->maps != NULL) {
+			victim = current->process->maps;
+			current->process->maps = victim->next;
+			vm_kfree(victim);
+		}
+
 		proc_resourcesDestroy(current->process);
 		proc_portsDestroy(current->process);
 	}
@@ -1122,6 +1171,27 @@ int proc_sigpost(int pid, int sig)
 	proc_lockClear(&process_common.lock);
 
 	return err;
+}
+
+
+int process_addMap(process_t *process, vm_map_t *map)
+{
+	vm_map_list_t *nel;
+
+	if ((nel = vm_kmalloc(sizeof(*nel))) == NULL)
+		return -ENOMEM;
+
+	proc_lockSet(&map->lock);
+	nel->map = map;
+	++map->refs;
+	proc_lockClear(&map->lock);
+
+	proc_lockSet(&process->lock);
+	nel->next = process->maps;
+	process->maps = nel;
+	proc_lockClear(&process->lock);
+
+	return pmap_merge(&process->mapp->pmap, &nel->map->pmap);
 }
 
 

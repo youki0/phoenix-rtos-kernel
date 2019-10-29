@@ -40,6 +40,8 @@ typedef struct _vm_map_t {
 	void *pmapv;
 	page_t *pmapp;
 #endif
+
+	int refs;
 } vm_map_t;
 
 

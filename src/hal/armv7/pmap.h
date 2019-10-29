@@ -32,11 +32,11 @@
 
 /* Architecure dependent page attributes - used for mapping */
 #define PGHD_PRESENT    0x01
-#define PGHD_USER       0x04
-#define PGHD_WRITE      0x02
-#define PGHD_EXEC       0x00
-#define PGHD_DEV        0x00
-#define PGHD_NOT_CACHED 0x00
+#define PGHD_USER       0x02
+#define PGHD_WRITE      0x04
+#define PGHD_EXEC       0x08
+#define PGHD_DEV        0x10
+#define PGHD_NOT_CACHED 0x20
 
 /* Page flags */
 #define PAGE_FREE            0x00000001
@@ -53,6 +53,9 @@
 #define PAGE_KERNEL_HEAP     (6 << 4)
 
 
+#define MPUR_MAX_CNT 16
+
+
 #ifndef __ASSEMBLY__
 
 #include "cpu.h"
@@ -65,27 +68,21 @@ typedef struct _page_t {
 	struct _page_t *next;
 } page_t;
 
+#pragma pack(push, 4)
+
+typedef struct {
+	u32 rbar;
+	u32 rasr;
+} hal_mpur_t;
+
 
 typedef struct _pmap_t {
-	u32 mpr;
+	hal_mpur_t mpur[MPUR_MAX_CNT];
 	void *start;
 	void *end;
 } pmap_t;
 
-
-typedef struct _mpur_t {
-	u8 region;
-	u32 base;
-	u32 size;
-	u8 subregions;
-	int attr;
-} mpur_t;
-
-
-static inline int pmap_belongs(pmap_t *pmap, void *addr)
-{
-	return addr >= pmap->start && addr < pmap->end;
-}
+#pragma pack(pop)
 
 
 extern int pmap_create(pmap_t *pmap, pmap_t *kpmap, page_t *p, void *vaddr);
@@ -94,10 +91,10 @@ extern int pmap_create(pmap_t *pmap, pmap_t *kpmap, page_t *p, void *vaddr);
 extern void pmap_switch(pmap_t *pmap);
 
 
-extern int pmap_enter(pmap_t *pmap, addr_t pa, void *vaddr, int attr, page_t *alloc);
+extern int pmap_addRegion(pmap_t *pmap, int rno);
 
 
-extern int pmap_remove(pmap_t *pmap, void *vaddr);
+extern int pmap_merge(pmap_t *dst, pmap_t *src);
 
 
 static inline addr_t pmap_resolve(pmap_t *pmap, void *vaddr)

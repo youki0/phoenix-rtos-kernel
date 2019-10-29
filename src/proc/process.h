@@ -24,6 +24,13 @@
 
 #define MAX_PID ((1LL << (__CHAR_BIT__ * (sizeof(unsigned)) - 1)) - 1)
 
+
+typedef struct _vm_map_list_t {
+	struct _vm_map_list_t *next;
+	vm_map_t *map;
+} vm_map_list_t;
+
+
 typedef struct _process_t {
 	lock_t lock;
 
@@ -43,6 +50,8 @@ typedef struct _process_t {
 		map_entry_t *entries;
 	};
 	vm_map_t *mapp;
+	vm_map_list_t *maps;
+
 	int exit;
 
 	unsigned lazy : 1;
@@ -115,5 +124,11 @@ extern int _process_init(vm_map_t *kmap, vm_object_t *kernel);
 
 
 extern void process_dumpException(unsigned int n, exc_context_t *exc);
+
+
+extern int process_addMap(process_t *process, vm_map_t *map);
+
+
+extern int process_removeMap(process_t *process, vm_map_t *map);
 
 #endif
