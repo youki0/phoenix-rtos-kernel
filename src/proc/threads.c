@@ -1465,7 +1465,7 @@ static void threads_idlethr(void *arg)
 			hal_spinlockClear(&threads_common.spinlock);
 #endif
 		}
-		hal_cpuHalt();
+//		hal_cpuHalt();
 	}
 }
 

@@ -50,8 +50,8 @@ GDB_SYM_FILE=`dirname ${OUTPUT}`"/gdb_symbols"
 SIZE_PAGE=$((0x200))
 PAGE_MASK=$((0xfffffe00))
 KERNEL_END=$((`readelf -l $KERNELELF | grep "LOAD" | grep "R E" | awk '{ print $6 }'`))
-FLASH_START=$((0x00000000))
-SYSPAGE_OFFSET=$((512))
+FLASH_START=$((0x30000000))
+SYSPAGE_OFFSET=$((0x1100))
 
 declare -i i
 declare -i j

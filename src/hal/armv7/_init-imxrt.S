@@ -25,9 +25,6 @@
 .extern syscalls
 .extern syspage
 
-#define IOMUXC_GPR 0x400ac000
-#define FLEXSPI2_BASE 0x70000000
-
 #define ADDR_ITCM 0x00000000
 #define ADDR_DTCM 0x20000000
 #define ADDR_SCB  0xe000ed00
@@ -36,99 +33,50 @@
 
 .section .init, "x"
 
+
+#define FLASH_BASE 0x30000000
+#define IOMUXC_GPR 0x400ac000
+
 _fcfb:
-.word 0x42464346 /* Tag */
-.word 0x56010400 /* Version */
-.word 0
-.byte 0x1        /* readSampleClkSrc */
-.byte 0x3        /* dataHoldTime */
-.byte 0x3        /* dataSetupTime */
-.byte 0          /* columnAdressWidth */
-.byte 0          /* deviceModeCfgEnable */
-.byte 0
-.byte 0, 0       /* waitTimeCfgCommnads */
-.word 0          /* deviceModeSeq */
-.word 0          /* deviceModeArg */
-.byte 0          /* configCmdEnable */
-.byte 0, 0, 0
-.word 0, 0, 0, 0 /* configCmdSeqs */
-.word 0, 0, 0, 0 /* cfgCmdArgs */
-.word 0x00000000 /* controllerMiscOption */
-.byte 0x1          /* deviceType */
-.byte 0x4        /* sflashPadType */
-.byte 0x8        /* serialClkFreq */
-.byte 0x0        /* lutCustomSeqEnable */
-.word 0, 0
-.word 0x04000000 /* sflashA1Size */
-.word 0          /* sflashA2Size */
-.word 0          /* sflashB1Size */
-.word 0          /* sflashB2Size */
-.word 0          /* csPadSettingOverride */
-.word 0          /* sclkPadSettingOverride */
-.word 0          /* dataPadSettingOverride */
-.word 0          /* dqsPadSettingOverride */
-.word 0          /* timeoutInMs */
-.word 0          /* commandInterval */
-.word 0x00000000 /* dataValidTime */
-.byte 0xf, 0     /* busyOffset */
-.byte 0x1, 0     /* busyBitPolarity */
+.org 0x400
+.word 0x42464346,0x56010400,0x00000000,0x00030301
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000010,0x00070401,0x00000000,0x00000000
+.word 0x01000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x0a1804eb,0x32041e00,0x00002604,0x00000000
+.word 0x24040405,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000406,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x08180420,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x081804d8,0x00000000,0x00000000,0x00000000
+.word 0x08180402,0x00002004,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000460,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000100,0x00001000,0x00000001,0x00000000
+.word 0x00010000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0x00000000,0x00000000,0x00000000,0x00000000
+.word 0xffffffff,0xffffffff,0xffffffff,0xffffffff
+.word 0xffffffff,0xffffffff,0xffffffff,0xffffffff
+.word 0xffffffff,0xffffffff,0xffffffff,0xffffffff
 
-/* lookupTable */
-.word 0x0a1804eb, 0x26043206, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-
-/* lutCustomSeq */
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-.word 0x00000000, 0x00000000, 0x00000000, 0x00000000
-
-.word 0x00000100 /* pageSize */
-.word 0x00001000 /* sectorSize */
-.word 0x00000000 /* ipCmdSerialClkFreq */
-.word 0x00000000
-.word 0x00040000
-
-.org _fcfb + 512
-
-.type _syspage, %object
-_syspage:
 
 .org _fcfb + 0x1000, 0x0
-
-ivt_flash:
-	.word 0x412000d1                                /* hdr */
-	.word _start + FLEXSPI2_BASE             /* entry */
-	.word 0                                         /* reserved 1 */
-	.word 0                                         /* dcd */
-	.word flash_boot_data + FLEXSPI2_BASE    /* boot_data */
-	.word ivt_flash + FLEXSPI2_BASE          /* self */
-	.word 0                                         /* csf */
-	.word 0                                         /* reserved 2 */
-
-flash_boot_data:
-	.word FLEXSPI2_BASE                      /* load address */
-	.word __bss_start__ - _fcfb                     /* size */
-	.word 0                                         /* plugin */
-	.word 0xffffffff                                /* empty - extra data word */
-
-ivt_flash_end:
-
-.org _fcfb + 0x1050, 0x0
 
 ivt:
 	.word 0x412000d1                    /* hdr */
@@ -141,14 +89,19 @@ ivt:
 	.word 0                             /* reserved 2 */
 
 boot_data:
-	.word ADDR_ITCM                     /* load address */
-	.word __bss_start__ - _fcfb         /* size */
+	.word FLASH_BASE                     /* load address */
+	.word 250 * 1024         /* size */
 	.word 0                             /* plugin */
 	.word 0xffffffff
 
 ivt_end:
 
 .org _fcfb + 0x1100, 0x0
+
+.type _syspage, %object
+_syspage:
+
+.org _fcfb + 0x2000, 0x0
 
 .globl _init_vectors
 .type _init_vectors, %object
@@ -184,61 +137,6 @@ _init_vectors:
 _start:
 	cpsid if
 
-	/* Check kernel localization */
-	ldr r0, =FLEXSPI2_BASE
-	mov r1, pc
-	cmp r0, r1
-	bgt _start_1
-
-	/* Prepare registers to kernel copy */
-	ldr r5, =__bss_start__
-	ldr r6, =_fcfb
-	sub r1, r5, r6
-	ldr r2, =FLEXSPI2_BASE
-	add r1, r1, r2
-	ldr r3, =ADDR_ITCM
-
-	/* Configure FLEX RAM */
-	ldr r8, =IOMUXC_GPR
-	ldr r9, =0x00200007
-	str r9, [r8, #0x40]
-
-	ldr r9, =0xaaaaffff
-	str r9, [r8, #0x44]
-
-_start_copy:
-	/* Copy kernel from internal flash to ITCM */
-	ldr r0, [r2], #4
-	str r0, [r3], #4
-
-	cmp r2, r1
-	blt _start_copy
-
-	/* Add offset to syspage's programs */
-	eor r0, r0, r0
-	ldr r4, =_syspage
-	ldr r1, [r4, #0xc]
-	add r2, r4, #0x10
-
-_programs_offset:
-	cmp r0, r1
-	bge _start_1
-
-	/* Program's start offset */
-	ldr r3, [r2]
-	add r3, r3, FLEXSPI2_BASE
-	str r3, [r2]
-
-	/* Program's end offset */
-	ldr r3, [r2], #4
-	add r3, r3, FLEXSPI2_BASE
-	str r3, [r2]
-
-	add r2, r2, #20
-	add r0, r0, #1
-	b _programs_offset
-
-_start_1:
 	/* Init vector table and stack pointer */
 	ldr r0, =0xe000ed08
 	ldr r1, =_init_vectors
